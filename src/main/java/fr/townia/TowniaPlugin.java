@@ -1,6 +1,7 @@
 package fr.townia;
 
 import fr.townia.command.TowniaCommand;
+import fr.townia.gui.CommerceMenu;
 import fr.townia.gui.VillageMenu;
 import fr.townia.gui.WorldMenu;
 import fr.townia.listener.TowniaListener;
@@ -48,6 +49,7 @@ public final class TowniaPlugin extends JavaPlugin {
     private ActivityService activity;
     private SkinService skins;
     private VillageMenu villageMenu;
+    private CommerceMenu commerceMenu;
     private WorldMenu worldMenu;
     private final Map<UUID, Location> originalLocations = new HashMap<>();
     private final Map<UUID, Long> lastCombatAt = new HashMap<>();
@@ -110,9 +112,12 @@ public final class TowniaPlugin extends JavaPlugin {
         getCommand("townia").setExecutor(command);
         getCommand("aide").setExecutor(command);
         getCommand("regles").setExecutor(command);
+        getCommand("commerce").setExecutor(command);
         villageMenu = new VillageMenu(this);
+        commerceMenu = new CommerceMenu(this);
         worldMenu = new WorldMenu(this);
         getServer().getPluginManager().registerEvents(villageMenu, this);
+        getServer().getPluginManager().registerEvents(commerceMenu, this);
         getServer().getPluginManager().registerEvents(worldMenu, this);
         getServer().getPluginManager().registerEvents(new TowniaListener(this), this);
         Bukkit.getScheduler().runTaskTimer(this, () -> getServer().getOnlinePlayers().forEach(activity::flush), 20L * 60, 20L * 60);
@@ -277,6 +282,7 @@ public final class TowniaPlugin extends JavaPlugin {
     public ActivityService activity() { return activity; }
     public SkinService skins() { return skins; }
     public VillageMenu villageMenu() { return villageMenu; }
+    public CommerceMenu commerceMenu() { return commerceMenu; }
     public WorldMenu worldMenu() { return worldMenu; }
 
     public void rememberOriginalLocation(Player player) {

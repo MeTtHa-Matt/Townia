@@ -33,6 +33,7 @@ public final class TowniaCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("leave")) return leave(sender, args);
         if (command.getName().equalsIgnoreCase("aide")) return aide(sender, args);
         if (command.getName().equalsIgnoreCase("regles")) return regles(sender, args);
+        if (command.getName().equalsIgnoreCase("commerce")) return commerce(sender, args);
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
@@ -48,6 +49,7 @@ public final class TowniaCommand implements CommandExecutor {
             sender.sendMessage(ChatColor.YELLOW + "/claim" + ChatColor.WHITE + " - revendiquer le chunk actuel");
             sender.sendMessage(ChatColor.YELLOW + "/home" + ChatColor.WHITE + " - te téléporter au home du village");
             sender.sendMessage(ChatColor.YELLOW + "/event" + ChatColor.WHITE + " - aller vers le monde d'événement");
+            sender.sendMessage(ChatColor.YELLOW + "/commerce <joueur>" + ChatColor.WHITE + " - ouvrir un commerce avec un autre joueur");
             sender.sendMessage(ChatColor.YELLOW + "/aide" + ChatColor.WHITE + " - afficher le guide complet");
             return;
         }
@@ -83,6 +85,30 @@ public final class TowniaCommand implements CommandExecutor {
         plugin.openServerRuleBook(player);
         say(player, "Le règlement du serveur a été ouvert dans ton livre.");
         return true;
+    }
+
+    private boolean commerce(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Cette commande est réservée aux joueurs en jeu.");
+            return true;
+        }
+        if (args == null || args.length == 0) {
+            say(player, "Utilisation : /commerce <joueur> | /commerce accept | /commerce refuse");
+            return true;
+        }
+        String action = args[0].toLowerCase();
+        if ("accept".equals(action)) return plugin.commerceMenu().accept(player);
+        if ("refuse".equals(action)) return plugin.commerceMenu().refuse(player);
+        if (args.length != 1) {
+            say(player, "Utilisation : /commerce <joueur>");
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[0]);
+        if (target == null) {
+            say(player, "Joueur introuvable ou hors ligne.");
+            return true;
+        }
+        return plugin.commerceMenu().request(player, target);
     }
 
     private boolean setHome(CommandSender sender, String[] args) {

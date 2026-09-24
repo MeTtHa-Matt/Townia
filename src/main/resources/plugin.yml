@@ -50,6 +50,9 @@ commands:
   regles:
     description: Ouvre le règlement du serveur dans un livre.
     usage: /regles
+  commerce:
+    description: Demande un commerce entre deux joueurs.
+    usage: /commerce <joueur> | /commerce accept | /commerce refuse
 permissions:
   townia.admin:
     default: op
