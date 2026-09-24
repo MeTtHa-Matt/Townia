@@ -1,0 +1,17 @@
+# Townia keeps data in plugins/Townia/data.yml.
+claims-per-member: 8
+vice-mayor-per-members: 10
+invite-expiration-hours: 48
+afk-timeout-minutes: 15
+skin-restore:
+  enabled: true
+  provider: skinsrestorer
+  api-key: ''
+discord:
+  enabled: false
+  webhook-url: ''
+anti-cheat:
+  enabled: false
+  xray-alert-threshold: 0.85
+worlds:
+  folder-prefix: 'world'

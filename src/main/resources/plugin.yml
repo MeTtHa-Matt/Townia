@@ -1,0 +1,40 @@
+name: Townia
+version: '${version}'
+main: fr.townia.TowniaPlugin
+api-version: '1.21'
+author: Townia
+softdepend: [DiscordSRV, SkinsRestorer]
+description: Villages, claims, permissions and administration for Paper.
+commands:
+  village:
+    aliases: [v, town]
+    description: Manage your village.
+    usage: /village
+  claim:
+    description: Claim the current chunk for your village.
+    usage: /claim
+  unclaim:
+    description: Unclaim the current chunk from your village.
+    usage: /unclaim
+  world:
+    description: Manage Townia worlds.
+    usage: /world <create|delete|join> <name>
+    permission: townia.admin.world
+  townia:
+    aliases: [towniaadmin]
+    description: Townia administration.
+    usage: /townia <help|reload|stats>
+    permission: townia.admin
+permissions:
+  townia.admin:
+    default: op
+  townia.admin.world:
+    default: op
+  townia.bypass:
+    default: op
+  townia.village.create:
+    default: true
+  townia.village.claim:
+    default: true
+  townia.village.manage:
+    default: true

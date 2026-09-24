@@ -1,0 +1,105 @@
+package fr.townia.command;
+
+import fr.townia.TowniaPlugin;
+import fr.townia.model.Claim;
+import fr.townia.model.Village;
+import fr.townia.model.VillageRole;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import java.io.File;
+import java.util.Objects;
+
+public final class TowniaCommand implements CommandExecutor {
+    private final TowniaPlugin plugin;
+    public TowniaCommand(TowniaPlugin plugin) { this.plugin = plugin; }
+    private void say(CommandSender sender, String message) { sender.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + message); }
+
+    @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("village")) return village(sender, args);
+        if (command.getName().equalsIgnoreCase("claim")) return village(sender, new String[]{"claim"});
+        if (command.getName().equalsIgnoreCase("unclaim")) return village(sender, new String[]{"unclaim"});
+        if (command.getName().equalsIgnoreCase("world")) return world(sender, args);
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
+        if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
+            say(sender, "Play time: " + plugin.activity().playtime(player.getUniqueId()) + " seconds"); return true;
+        }
+        help(sender); return true;
+    }
+
+    private void help(CommandSender sender) {
+        sender.sendMessage(ChatColor.GOLD + "===== Townia =====");
+        sender.sendMessage(ChatColor.YELLOW + "/village" + ChatColor.WHITE + " - Ouvrir l'interface graphique");
+        sender.sendMessage(ChatColor.YELLOW + "/village create <nom>" + ChatColor.WHITE + " - Creer un village");
+        sender.sendMessage(ChatColor.YELLOW + "/village invite <joueur>" + ChatColor.WHITE + " - Inviter un joueur");
+        sender.sendMessage(ChatColor.YELLOW + "/village join <nom>" + ChatColor.WHITE + " - Rejoindre un village ouvert ou invite");
+        sender.sendMessage(ChatColor.YELLOW + "/village open|close" + ChatColor.WHITE + " - Ouvrir ou fermer les adhesions");
+        sender.sendMessage(ChatColor.YELLOW + "/village claim|unclaim" + ChatColor.WHITE + " - Gerer le chunk actuel");
+        sender.sendMessage(ChatColor.YELLOW + "/claim" + ChatColor.WHITE + " - Claim le chunk actuel");
+        sender.sendMessage(ChatColor.YELLOW + "/unclaim" + ChatColor.WHITE + " - Retirer le claim actuel");
+        sender.sendMessage(ChatColor.YELLOW + "/village trust <joueur>" + ChatColor.WHITE + " - Ajouter un membre");
+        sender.sendMessage(ChatColor.YELLOW + "/village setrole <joueur> <member|vice>" + ChatColor.WHITE + " - Gerer un grade");
+        sender.sendMessage(ChatColor.YELLOW + "/townia stats" + ChatColor.WHITE + " - Voir son temps de jeu");
+        if (sender.hasPermission("townia.admin")) {
+            sender.sendMessage(ChatColor.RED + "--- Administration ---");
+            sender.sendMessage(ChatColor.RED + "/world create <nom>" + ChatColor.WHITE + " - Creer un monde");
+            sender.sendMessage(ChatColor.RED + "/world join <nom>" + ChatColor.WHITE + " - Rejoindre un monde");
+            sender.sendMessage(ChatColor.RED + "/world delete <nom>" + ChatColor.WHITE + " - Decharger un monde");
+            sender.sendMessage(ChatColor.RED + "/townia reload" + ChatColor.WHITE + " - Recharger la configuration");
+            sender.sendMessage(ChatColor.RED + "/townia help" + ChatColor.WHITE + " - Afficher cette aide");
+        }
+    }
+
+    private boolean village(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) { say(sender, "Player only."); return true; }
+        if (args.length == 0) { plugin.villageMenu().openMain(player); return true; }
+        Village own = plugin.villages().byPlayer(player.getUniqueId());
+        switch (args[0].toLowerCase()) {
+            case "create" -> { if (!player.hasPermission("townia.village.create")) return denied(player); if (args.length < 2) return usage(player, "create <name>"); Village created = plugin.villages().create(args[1], player.getUniqueId()); say(player, created == null ? "Name used or already in a village." : "Village created: " + created.name()); }
+            case "accept" -> { if (args.length < 2) return usage(player, "accept <village-id>"); Village target; try { target = plugin.villages().byId(java.util.UUID.fromString(args[1])); } catch (IllegalArgumentException exception) { return usage(player, "invalid village invitation"); } if (target == null || target.excluded().contains(player.getUniqueId()) || !target.invited().contains(player.getUniqueId())) return usage(player, "invitation expired or invalid"); if (own != null) return usage(player, "leave your current village first"); target.addMember(player.getUniqueId()); target.invited().remove(player.getUniqueId()); say(player, "You joined " + target.name()); }
+            case "invite" -> { if (own == null || !canManage(own, player)) return denied(player); if (args.length < 2) return usage(player, "invite <player>"); Player target = Bukkit.getPlayerExact(args[1]); if (target == null) return usage(player, "invite an online player"); own.invited().add(target.getUniqueId()); say(target, "You were invited to " + own.name() + ". Use /village join " + own.name()); }
+            case "open" -> { if (own == null || !canManage(own, player)) return denied(player); own.setOpen(true); say(player, "Village is now open."); }
+            case "close" -> { if (own == null || !canManage(own, player)) return denied(player); own.setOpen(false); say(player, "Village is now invite-only."); }
+            case "join" -> { if (args.length < 2) return usage(player, "join <name>"); String villageName = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)); Village target = plugin.villages().byName(villageName); if (target == null || target.excluded().contains(player.getUniqueId()) || (!target.open() && !target.invited().contains(player.getUniqueId()))) return usage(player, "village not found or invite required"); if (own != null) return usage(player, "leave your current village first"); target.addMember(player.getUniqueId()); target.invited().remove(player.getUniqueId()); say(player, "You joined " + target.name()); }
+            case "claim" -> { if (!canClaim(own, player)) return denied(player); int max = maximumClaims(own); if (own.claims().size() >= max) return usage(player, "claim limit reached (" + max + ")"); Claim claim = Claim.at(player.getChunk()); Village owner = plugin.villages().owner(claim); if (owner != null) { claimConflict(player, own, owner); return true; } plugin.villages().claim(own, claim, player.getUniqueId(), player.getLocation()); say(player, "Chunk " + claim.chunkX() + ", " + claim.chunkZ() + " claimed (position bloc " + player.getLocation().getBlockX() + ", " + player.getLocation().getBlockZ() + ")."); }
+            case "unclaim" -> { if (!canClaim(own, player)) return denied(player); Claim claim = Claim.at(player.getChunk()); boolean ok = plugin.villages().unclaim(own, claim); say(player, ok ? "Chunk " + claim.chunkX() + ", " + claim.chunkZ() + " unclaimed." : "This chunk is not yours."); }
+            case "trust" -> { if (own == null || !canManage(own, player) || !player.hasPermission("townia.village.manage") || args.length < 2) return denied(player); Player target = Bukkit.getPlayerExact(args[1]); if (target != null) { own.setRole(target.getUniqueId(), VillageRole.MEMBER); say(player, target.getName() + " is now a member."); } }
+            case "setrole" -> { if (own == null || !player.getUniqueId().equals(own.mayor()) || !player.hasPermission("townia.village.manage") || args.length < 3) return denied(player); Player target = Bukkit.getPlayerExact(args[1]); if (target != null) { VillageRole role = args[2].equalsIgnoreCase("vice") ? VillageRole.VICE_MAYOR : VillageRole.MEMBER; long viceMayors = own.members().values().stream().filter(existing -> existing == VillageRole.VICE_MAYOR).count(); int maximum = Math.max(1, own.members().size() / plugin.getConfig().getInt("vice-mayor-per-members", 10)); if (role == VillageRole.VICE_MAYOR && own.role(target.getUniqueId()) != VillageRole.VICE_MAYOR && viceMayors >= maximum) return usage(player, "vice-mayor limit reached"); own.setRole(target.getUniqueId(), role); } }
+            default -> say(player, "Unknown village action.");
+        }
+        plugin.villages().save(); return true;
+    }
+
+    private boolean world(CommandSender sender, String[] args) {
+        if (args.length < 2) return usage(sender, "world <create|delete|join> <name>");
+        String name = args[1].replaceAll("[^A-Za-z0-9_-]", "");
+        if (name.isBlank()) return usage(sender, "valid world name required");
+        switch (args[0].toLowerCase()) {
+            case "create" -> { Bukkit.createWorld(new WorldCreator(name)); say(sender, "World created: " + name); }
+            case "join" -> { if (!(sender instanceof Player player)) return true; World world = Bukkit.getWorld(name); if (world == null) world = Bukkit.createWorld(new WorldCreator(name)); player.teleport(Objects.requireNonNull(world).getSpawnLocation()); }
+            case "delete" -> { World world = Bukkit.getWorld(name); if (world == null || world.equals(Bukkit.getWorlds().getFirst())) return usage(sender, "world cannot be deleted or is not loaded"); Bukkit.unloadWorld(world, false); say(sender, "World unloaded. Delete its folder manually after confirmation: " + new File(Bukkit.getWorldContainer(), name)); }
+            default -> say(sender, "Unknown world action.");
+        }
+        return true;
+    }
+    private boolean canManage(Village v, Player p) { return p.hasPermission("townia.village.manage") && (v.role(p.getUniqueId()) == VillageRole.MAYOR || v.role(p.getUniqueId()) == VillageRole.VICE_MAYOR); }
+    private boolean canClaim(Village v, Player p) { return v != null && p.hasPermission("townia.village.claim") && v.isMember(p.getUniqueId()) && v.allows(p.getUniqueId(), fr.townia.model.VillageAction.CLAIM); }
+    private int maximumClaims(Village village) { return village.members().size() * plugin.getConfig().getInt("claims-per-member", 8); }
+    private void claimConflict(Player player, Village village, Village owner) {
+        say(player, "Impossible de claim ce chunk : il appartient deja au village " + owner.name() + ".");
+        player.sendActionBar(ChatColor.RED + "Zone deja claim par " + owner.name());
+        if (!owner.id().equals(village.id())) {
+            Player mayor = Bukkit.getPlayer(owner.mayor());
+            if (mayor != null && !mayor.equals(player)) say(mayor, "Alerte : " + player.getName() + " a tente de claim un chunk de votre village.");
+        }
+    }
+    private boolean denied(CommandSender sender) { say(sender, "You do not have permission for this action."); return true; }
+    private boolean usage(CommandSender sender, String text) { say(sender, "Usage: /village " + text); return true; }
+}
