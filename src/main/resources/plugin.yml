@@ -47,6 +47,9 @@ commands:
   aide:
     description: Affiche le guide d'utilisation de Townia.
     usage: /aide [admin]
+  regles:
+    description: Ouvre le règlement du serveur dans un livre.
+    usage: /regles
 permissions:
   townia.admin:
     default: op

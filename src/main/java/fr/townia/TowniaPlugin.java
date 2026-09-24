@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.configuration.ConfigurationSection;
@@ -18,6 +19,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -107,6 +109,7 @@ public final class TowniaPlugin extends JavaPlugin {
         getCommand("leave").setExecutor(command);
         getCommand("townia").setExecutor(command);
         getCommand("aide").setExecutor(command);
+        getCommand("regles").setExecutor(command);
         villageMenu = new VillageMenu(this);
         worldMenu = new WorldMenu(this);
         getServer().getPluginManager().registerEvents(villageMenu, this);
@@ -126,16 +129,28 @@ public final class TowniaPlugin extends JavaPlugin {
         if (player == null) return;
         player.sendMessage(ChatColor.GOLD + "══════════════════════════════════════");
         player.sendMessage(ChatColor.GOLD + "Bienvenue sur Townia !");
-        player.sendMessage(ChatColor.WHITE + "Voici les bases pour bien commencer :");
-        player.sendMessage(ChatColor.YELLOW + "• /village" + ChatColor.WHITE + " : ouvre le menu du village");
-        player.sendMessage(ChatColor.YELLOW + "• /claim" + ChatColor.WHITE + " : revendique le chunk où tu te trouves");
-        player.sendMessage(ChatColor.YELLOW + "• /unclaim" + ChatColor.WHITE + " : retire ton claim actuel");
-        player.sendMessage(ChatColor.YELLOW + "• /sethome" + ChatColor.WHITE + " : place ton home dans un claim de ton village");
-        player.sendMessage(ChatColor.YELLOW + "• /home" + ChatColor.WHITE + " : retourne au home du village");
-        player.sendMessage(ChatColor.YELLOW + "• /event" + ChatColor.WHITE + " : va vers le monde d'événement");
-        player.sendMessage(ChatColor.YELLOW + "• /leave" + ChatColor.WHITE + " : retourne dans le monde principal si le monde le permet");
+        player.sendMessage(ChatColor.WHITE + "Townia est le système du serveur qui organise la vie sociale, la protection des terrains et la gestion des mondes.");
+        player.sendMessage(ChatColor.WHITE + "L'idée est simple : crée ton village, protège tes zones, attribue des droits à tes membres et profite d'un serveur plus structuré et plus sûr.");
+        player.sendMessage(ChatColor.YELLOW + "Pourquoi utiliser Townia ?");
+        player.sendMessage(ChatColor.GRAY + "• les joueurs peuvent créer un village et le gérer ensemble");
+        player.sendMessage(ChatColor.GRAY + "• chaque claim protège un territoire contre les constructions et interractions non autorisées");
+        player.sendMessage(ChatColor.GRAY + "• les homes de village permettent de revenir facilement chez soi");
+        player.sendMessage(ChatColor.GRAY + "• les mondes peuvent avoir des règles distinctes : PvP, PvE, inventaire, permissions et mode de jeu");
+        player.sendMessage(ChatColor.YELLOW + "Comment ça marche en pratique ?");
+        player.sendMessage(ChatColor.GRAY + "1. Ouvre le menu /village pour créer ton village ou rejoindre un village ouvert.");
+        player.sendMessage(ChatColor.GRAY + "2. Utilise /claim pour revendiquer le chunk sur lequel tu te trouves.");
+        player.sendMessage(ChatColor.GRAY + "3. Place un home dans un claim de ton village avec /sethome, puis retourne avec /home.");
+        player.sendMessage(ChatColor.GRAY + "4. Gère les membres, les grades et les permissions depuis le menu village.");
+        player.sendMessage(ChatColor.YELLOW + "Commandes utiles");
+        player.sendMessage(ChatColor.YELLOW + "• /village" + ChatColor.WHITE + " : ouvre le menu principal du village");
+        player.sendMessage(ChatColor.YELLOW + "• /claim" + ChatColor.WHITE + " : revendique le chunk actuel");
+        player.sendMessage(ChatColor.YELLOW + "• /unclaim" + ChatColor.WHITE + " : retire le claim actuel si tu as le droit");
+        player.sendMessage(ChatColor.YELLOW + "• /sethome" + ChatColor.WHITE + " : défini le home du village dans un claim protégé");
+        player.sendMessage(ChatColor.YELLOW + "• /home" + ChatColor.WHITE + " : te téléporte au home du village");
+        player.sendMessage(ChatColor.YELLOW + "• /event" + ChatColor.WHITE + " : te ramène vers le monde d'événement");
+        player.sendMessage(ChatColor.YELLOW + "• /leave" + ChatColor.WHITE + " : retourne vers le monde principal quand le monde le permet");
         player.sendMessage(ChatColor.YELLOW + "• /aide" + ChatColor.WHITE + " : relance ce guide à tout moment");
-        player.sendMessage(ChatColor.GRAY + "Astuce : les moments de village, les claims et les permissions sont gérés depuis le menu village.");
+        player.sendMessage(ChatColor.GRAY + "L'objectif global du plugin est de rendre le serveur plus vivant, plus organisé et plus facile à gérer pour les joueurs comme pour les admins.");
         player.sendMessage(ChatColor.GOLD + "══════════════════════════════════════");
     }
 
@@ -143,13 +158,95 @@ public final class TowniaPlugin extends JavaPlugin {
         if (player == null) return;
         player.sendMessage(ChatColor.DARK_RED + "══════════════════════════════════════");
         player.sendMessage(ChatColor.DARK_RED + "Mode administrateur Townia activé");
-        player.sendMessage(ChatColor.WHITE + "Tu peux gérer le serveur avec :");
-        player.sendMessage(ChatColor.RED + "• /world" + ChatColor.WHITE + " : créer, modifier et supprimer les mondes");
-        player.sendMessage(ChatColor.RED + "• /event" + ChatColor.WHITE + " : teleportation vers le monde d'événement");
-        player.sendMessage(ChatColor.RED + "• /aide admin" + ChatColor.WHITE + " : relance l'aide administrateur");
-        player.sendMessage(ChatColor.RED + "• /townia reload" + ChatColor.WHITE + " : recharge la configuration");
-        player.sendMessage(ChatColor.GRAY + "Dans /world, tu peux gérer le mode de jeu, le PvP/PvE, les permissions, les inventaires sync et les paramètres de dimension.");
+        player.sendMessage(ChatColor.WHITE + "Tu es maintenant en charge de la direction du serveur. Townia ne sert pas seulement aux villages : il organise aussi les mondes, leurs règles, leurs inventaires et leur sécurité.");
+        player.sendMessage(ChatColor.WHITE + "Tu peux créer des mondes spécifiques, choisir si les joueurs gardent leur inventaire ou non, gérer les permissions par monde, et contrôler le comportement PvP/PvE, le mode de jeu, la protection et les accès.");
+        player.sendMessage(ChatColor.RED + "Ce que tu peux gérer");
+        player.sendMessage(ChatColor.GRAY + "• créer, modifier, sécuriser et supprimer des mondes via /world");
+        player.sendMessage(ChatColor.GRAY + "• activer ou désactiver le PvP, le PvE et les modes de jeu selon le monde");
+        player.sendMessage(ChatColor.GRAY + "• paramétrer les permissions de joueurs et le comportement de chaque dimension");
+        player.sendMessage(ChatColor.GRAY + "• gérer les inventaires synchronisés entre mondes pour un jeu plus fluide ou plus strict");
+        player.sendMessage(ChatColor.GRAY + "• contrôler le monde d'événement et le retour au monde principal");
+        player.sendMessage(ChatColor.RED + "Commandes clés");
+        player.sendMessage(ChatColor.RED + "• /world" + ChatColor.WHITE + " : ouvre l'interface de gestion des mondes");
+        player.sendMessage(ChatColor.RED + "• /event" + ChatColor.WHITE + " : téléporte vers le monde d'événement");
+        player.sendMessage(ChatColor.RED + "• /leave" + ChatColor.WHITE + " : permet de revenir au monde principal dans les conditions autorisées");
+        player.sendMessage(ChatColor.RED + "• /aide admin" + ChatColor.WHITE + " : relance ce guide admin");
+        player.sendMessage(ChatColor.RED + "• /townia reload" + ChatColor.WHITE + " : recharge la configuration du plugin");
+        player.sendMessage(ChatColor.GRAY + "En résumé : Townia sert à faire fonctionner le serveur comme un environnement structuré, avec villages, territoires, règles de monde et organisation claire pour les joueurs.");
         player.sendMessage(ChatColor.DARK_RED + "══════════════════════════════════════");
+    }
+
+    public void openServerRuleBook(Player player) {
+        if (player == null) return;
+
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        if (meta == null) return;
+
+        meta.setTitle("Townia - Règlement");
+        meta.setAuthor("Staff Townia");
+
+        List<String> pages = new ArrayList<>();
+        String intro = "TOWNIA\nRèglement officiel\n\n"
+            + "Ce plugin a été développé par un deuxième année. Merci de ne pas prendre personnellement les bugs et de les signaler au staff.\n\n"
+            + "Le serveur est avant tout une survie. Le but est de construire, d’échanger, de vivre ensemble et de jouer proprement.";
+        pages.addAll(buildSafePages(intro));
+
+        String rules = "Règles générales\n\n"
+            + "1. Pas de grief : aucune destruction, sabotage ou vandalisme des constructions d’autrui.\n"
+            + "2. Pas d’insultes, harcèlement, provocation ou discours toxique.\n"
+            + "3. Pas de triche, hacks, dupes, abus de bug ou mod d’avantage.\n"
+            + "4. Respectez les villages, claims et bases de chacun.\n"
+            + "5. Les constructions doivent rester propres, lisibles et sans blocage injuste.\n"
+            + "6. Le staff est là pour faire respecter le cadre et maintenir un environnement sain.";
+        pages.addAll(buildSafePages(rules));
+
+        String gameplay = "PvP, commerce et bon sens\n\n"
+            + "7. Le PvP est autorisé uniquement dans les zones prévues à cet effet.\n"
+            + "8. Le commerce est autorisé, mais pas l’arnaque, les faux échanges ni les abus.\n"
+            + "9. Les fermes et automatisations doivent rester raisonnables pour éviter le lag.\n"
+            + "10. Le chat doit rester propre, clair et respectueux.\n"
+            + "11. Si vous trouvez un bug, signalez-le au staff.\n\n"
+            + "Le serveur fonctionne grâce au respect collectif. Merci de jouer proprement pour le bien de tous.";
+        pages.addAll(buildSafePages(gameplay));
+
+        meta.setPages(pages);
+        book.setItemMeta(meta);
+        player.openBook(book);
+    }
+
+    private List<String> buildSafePages(String text) {
+        List<String> pages = new ArrayList<>();
+        if (text == null || text.isBlank()) return pages;
+
+        String[] paragraphs = text.split("\\n\\n");
+        StringBuilder current = new StringBuilder();
+
+        for (String paragraph : paragraphs) {
+            String[] lines = paragraph.split("\\n");
+            for (String line : lines) {
+                if (current.length() + line.length() + 1 > 220) {
+                    pages.add(current.toString());
+                    current = new StringBuilder();
+                }
+                if (current.length() > 0) current.append("\n");
+                current.append(line);
+            }
+            if (current.length() > 180) {
+                pages.add(current.toString());
+                current = new StringBuilder();
+            }
+        }
+
+        if (current.length() > 0) {
+            pages.add(current.toString());
+        }
+
+        return pages;
+    }
+
+    public void openFirstJoinRuleBook(Player player) {
+        openServerRuleBook(player);
     }
 
     private void printStartupBanner() {

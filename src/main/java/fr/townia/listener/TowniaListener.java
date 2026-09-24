@@ -48,6 +48,7 @@ public final class TowniaListener implements Listener {
         plugin.skins().restore(player);
         if (!player.hasPlayedBefore()) {
             plugin.sendFirstJoinGuide(player);
+            plugin.openServerRuleBook(player);
             if (player.hasPermission("townia.admin") || player.isOp()) {
                 plugin.sendAdminGuide(player);
             }

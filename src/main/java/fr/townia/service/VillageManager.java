@@ -57,6 +57,7 @@ public final class VillageManager {
         return true;
     }
     public boolean unclaim(Village village, Claim claim) {
+        if (village.homeIsInClaim(claim)) return false;
         if (!village.claims().remove(claim)) return false;
         claimOwners.remove(claim);
         claimers.remove(claim);

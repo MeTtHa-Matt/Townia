@@ -32,6 +32,7 @@ public final class TowniaCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("event")) return event(sender, args);
         if (command.getName().equalsIgnoreCase("leave")) return leave(sender, args);
         if (command.getName().equalsIgnoreCase("aide")) return aide(sender, args);
+        if (command.getName().equalsIgnoreCase("regles")) return regles(sender, args);
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
@@ -71,6 +72,16 @@ public final class TowniaCommand implements CommandExecutor {
             return true;
         }
         plugin.sendFirstJoinGuide(player);
+        return true;
+    }
+
+    private boolean regles(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Cette commande est réservée aux joueurs en jeu.");
+            return true;
+        }
+        plugin.openServerRuleBook(player);
+        say(player, "Le règlement du serveur a été ouvert dans ton livre.");
         return true;
     }
 

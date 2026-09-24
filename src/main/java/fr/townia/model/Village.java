@@ -61,6 +61,14 @@ public final class Village {
         return rolePermissions != null && rolePermissions.allows(action);
     }
 
+    public boolean homeIsInClaim(Claim claim) {
+        if (home == null || home.getWorld() == null) return false;
+        if (!home.getWorld().getName().equals(claim.world())) return false;
+        int chunkX = (int) Math.floor(home.getX() / 16.0);
+        int chunkZ = (int) Math.floor(home.getZ() / 16.0);
+        return chunkX == claim.chunkX() && chunkZ == claim.chunkZ();
+    }
+
     public VillageRole role(UUID player) { return members.get(player); }
     public boolean isMember(UUID player) { return members.containsKey(player); }
     public void addMember(UUID player) { members.put(player, VillageRole.MEMBER); }

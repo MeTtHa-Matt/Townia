@@ -8,9 +8,11 @@ import fr.townia.model.Village;
 import fr.townia.model.VillagePermissions;
 import fr.townia.model.VillageRole;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,6 +144,38 @@ class VillageManagerTest {
 
         assertTrue(mayorPermissions.allows(VillageAction.HOME));
         assertTrue(memberPermissions.allows(VillageAction.HOME));
+    }
+
+    @Test void homeClaimCannotBeUnclaimed() {
+        VillageManager manager = new VillageManager(new File("build/test-home-protection-data.yml"));
+        Village village = manager.create("ProtectedHome", UUID.randomUUID());
+        Claim claim = new Claim("world", 4, 6);
+        assertTrue(manager.claim(village, claim));
+
+        World world = (World) Proxy.newProxyInstance(
+                World.class.getClassLoader(),
+                new Class<?>[]{World.class},
+                (proxy, method, args) -> {
+                    if (method.getName().equals("getName")) return "world";
+                    if (method.getName().equals("equals")) return proxy == args[0];
+                    if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
+                    if (method.getName().equals("toString")) return "ProxyWorld(world)";
+                    return switch (method.getReturnType().getName()) {
+                        case "boolean" -> false;
+                        case "int" -> 0;
+                        case "long" -> 0L;
+                        case "double" -> 0d;
+                        case "float" -> 0f;
+                        default -> null;
+                    };
+                }
+        );
+
+        Location home = new Location(world, (claim.chunkX() << 4) + 10, 64, (claim.chunkZ() << 4) + 10, 0f, 0f);
+        village.setHome(home);
+
+        assertFalse(manager.unclaim(village, claim));
+        assertTrue(village.claims().contains(claim));
     }
 
     @Test void inventoryPolicySavesOnExitAndRestoresOnlyForSyncWorlds() {

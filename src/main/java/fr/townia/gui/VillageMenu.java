@@ -59,36 +59,38 @@ public final class VillageMenu implements Listener {
 
     public void openMain(Player player) {
         Village village = plugin.villages().byPlayer(player.getUniqueId());
-        Inventory inventory = Bukkit.createInventory(null, 27, MAIN);
+        Inventory inventory = Bukkit.createInventory(null, 54, MAIN);
         if (village == null) {
             inventory.setItem(11, item(Material.EMERALD, "Creer un village", "Cliquez puis saisissez son nom dans le chat."));
             inventory.setItem(15, item(Material.COMPASS, "Rejoindre un village", "Voir les villages ouverts."));
+            inventory.setItem(31, item(Material.BOOK, "Aide rapide", "Utilise /village pour ouvrir le menu", "et /aide pour voir les commandes."));
         } else {
-            inventory.setItem(4, profileItem(player, village));
-            inventory.setItem(10, item(Material.GOLDEN_SHOVEL, "Claim ce chunk", "Protection du chunk actuel."));
-            inventory.setItem(12, item(Material.IRON_SHOVEL, "Unclaim ce chunk", "Retirer votre claim actuel."));
-            inventory.setItem(14, item(Material.PLAYER_HEAD, "Membres et grades", "Ajouter un joueur ou modifier son grade."));
-            inventory.setItem(16, item(village.open() ? Material.LIME_DYE : Material.RED_DYE, village.open() ? "Fermer les adhesions" : "Ouvrir les adhesions", "Maire ou vice-maire uniquement."));
-            inventory.setItem(19, item(Material.MAP, "Claims du village", village.claims().size() + " / " + maximumClaims(village) + " claims utilises"));
-            inventory.setItem(20, item(Material.ENDER_PEARL, "Aller au home", "Se teleporter vers le home du village."));
-            if (canManage(player, village)) inventory.setItem(21, item(Material.COMPARATOR, "Permissions", "Regler les actions par grade."));
-            if (village.allows(player.getUniqueId(), VillageAction.CREATE_ROLES)) inventory.setItem(23, item(Material.WRITABLE_BOOK, CREATE_ROLE, "Creer un role personnalise."));
-            inventory.setItem(25, item(Material.BOOK, "Profil du joueur", "Temps de jeu, grade et activité."));
-            if (village.mayor().equals(player.getUniqueId())) inventory.setItem(26, item(Material.TNT, "Supprimer le village", "Action irreversible."));
-            else inventory.setItem(26, item(Material.OAK_DOOR, "Quitter le village", "Vous ne serez plus membre."));
+            inventory.setItem(22, profileItem(player, village));
+            inventory.setItem(19, item(Material.GOLDEN_SHOVEL, "Claim ce chunk", "Protection du chunk actuel."));
+            inventory.setItem(21, item(Material.IRON_SHOVEL, "Unclaim ce chunk", "Retirer votre claim actuel."));
+            inventory.setItem(23, item(Material.PLAYER_HEAD, "Membres et grades", "Ajouter un joueur ou modifier son grade."));
+            inventory.setItem(25, item(village.open() ? Material.LIME_DYE : Material.RED_DYE, village.open() ? "Fermer les adhesions" : "Ouvrir les adhesions", "Maire ou vice-maire uniquement."));
+            inventory.setItem(28, item(Material.MAP, "Claims du village", village.claims().size() + " / " + maximumClaims(village) + " claims utilises"));
+            inventory.setItem(30, item(Material.ENDER_PEARL, "Aller au home", "Se teleporter vers le home du village."));
+            if (canManage(player, village)) inventory.setItem(32, item(Material.COMPARATOR, "Permissions", "Regler les actions par grade."));
+            if (village.allows(player.getUniqueId(), VillageAction.CREATE_ROLES)) inventory.setItem(34, item(Material.WRITABLE_BOOK, CREATE_ROLE, "Creer un role personnalise."));
+            inventory.setItem(38, item(Material.BOOK, "Profil du joueur", "Temps de jeu, grade et activite."));
+            if (village.mayor().equals(player.getUniqueId())) inventory.setItem(42, item(Material.TNT, "Supprimer le village", "Action irreversible."));
+            else inventory.setItem(42, item(Material.OAK_DOOR, "Quitter le village", "Vous ne serez plus membre."));
+            inventory.setItem(49, item(Material.ARROW, BACK, "Retour a l'accueil."));
         }
         player.openInventory(inventory);
     }
 
     private void openProfile(Player player, Village village) {
-        Inventory inventory = Bukkit.createInventory(null, 27, PROFILE);
-        inventory.setItem(4, profileItem(player, village));
-        inventory.setItem(11, item(Material.CLOCK, "Temps de jeu", formatDuration(plugin.activity().playtime(player.getUniqueId())), "Suivi d'activite global."));
-        inventory.setItem(13, item(Material.GOLD_INGOT, "Grade", displayRoleName(village, player.getUniqueId()), "Village : " + village.name()));
-        inventory.setItem(15, item(Material.BOOK, "Village", "Membres : " + village.members().size(), "Claims : " + village.claims().size() + " / " + maximumClaims(village), "Ouvert : " + (village.open() ? "Oui" : "Non")));
-        inventory.setItem(22, item(Material.DIAMOND_PICKAXE, "Claims", "Terrains possedes : " + village.claims().size(), "Limite : " + maximumClaims(village)));
-        inventory.setItem(24, item(Material.EMERALD, "Gestion", canManage(player, village) ? "Vous pouvez gerer le village." : "Acces limite au village."));
-        inventory.setItem(26, item(Material.ARROW, BACK, "Retour au menu principal."));
+        Inventory inventory = Bukkit.createInventory(null, 54, PROFILE);
+        inventory.setItem(22, profileItem(player, village));
+        inventory.setItem(20, item(Material.CLOCK, "Temps de jeu", formatDuration(plugin.activity().playtime(player.getUniqueId())), "Suivi d'activite global."));
+        inventory.setItem(24, item(Material.GOLD_INGOT, "Grade", displayRoleName(village, player.getUniqueId()), "Village : " + village.name()));
+        inventory.setItem(29, item(Material.BOOK, "Village", "Membres : " + village.members().size(), "Claims : " + village.claims().size() + " / " + maximumClaims(village), "Ouvert : " + (village.open() ? "Oui" : "Non")));
+        inventory.setItem(33, item(Material.DIAMOND_PICKAXE, "Claims", "Terrains possedes : " + village.claims().size(), "Limite : " + maximumClaims(village)));
+        inventory.setItem(38, item(Material.EMERALD, "Gestion", canManage(player, village) ? "Vous pouvez gerer le village." : "Acces limite au village."));
+        inventory.setItem(49, item(Material.ARROW, BACK, "Retour au menu principal."));
         player.openInventory(inventory);
     }
 
@@ -118,6 +120,7 @@ public final class VillageMenu implements Listener {
         inventory.setItem(45, item(Material.ARROW, BACK, "Retour au menu principal."));
         inventory.setItem(47, item(Material.NAME_TAG, "Inviter un joueur", "Choisir un joueur en ligne."));
         inventory.setItem(49, item(Material.BARRIER, HOME, "Fermer ce menu et revenir a l'accueil."));
+        if (targets.isEmpty()) inventory.setItem(22, item(Material.BARRIER, "Aucun membre", "Le village est vide pour l'instant."));
         player.openInventory(inventory);
     }
 
@@ -178,6 +181,7 @@ public final class VillageMenu implements Listener {
         }
         inventory.setItem(45, item(Material.COMPASS, "Voir les chunks claims", "Affiche les limites des chunks claims en jeu."));
         inventory.setItem(49, item(Material.ARROW, BACK, "Retour au menu principal."));
+        if (village.claims().isEmpty()) inventory.setItem(22, item(Material.BARRIER, "Aucun claim", "Le village n'a pas encore de terrain."));
         player.openInventory(inventory);
     }
 
@@ -201,8 +205,13 @@ public final class VillageMenu implements Listener {
     private void deleteClaim(Player player, Village village) {
         Claim claim = pendingClaimDeletion.remove(player.getUniqueId());
         if (claim == null || !canClaim(player, village)) { deny(player); return; }
+        if (village.homeIsInClaim(claim)) {
+            player.sendMessage(ChatColor.RED + "Impossible de supprimer ce claim : il contient le home du village.");
+            openClaims(player, village);
+            return;
+        }
         boolean deleted = plugin.villages().unclaim(village, claim);
-        player.sendMessage(deleted ? ChatColor.GREEN + "Claim supprime." : ChatColor.RED + "Ce claim n'existe plus.");
+        player.sendMessage(deleted ? ChatColor.GREEN + "Claim supprime." : ChatColor.RED + "Ce claim n'existe plus ou il contient le home du village.");
         plugin.villages().save();
         openClaims(player, village);
     }
@@ -235,12 +244,12 @@ public final class VillageMenu implements Listener {
 
     private void openRoleChooser(Player player, Village village, UUID targetId, String targetName) {
         editingPlayer.put(player.getUniqueId(), targetId);
-        Inventory inventory = Bukkit.createInventory(null, 36, ROLE_CHOOSER);
-        inventory.setItem(12, item(Material.GOLD_INGOT, "Vice-maire", targetName));
-        inventory.setItem(14, item(Material.IRON_INGOT, "Membre", targetName));
-        int slot = 19;
+        Inventory inventory = Bukkit.createInventory(null, 45, ROLE_CHOOSER);
+        inventory.setItem(11, item(Material.GOLD_INGOT, "Vice-maire", targetName));
+        inventory.setItem(13, item(Material.IRON_INGOT, "Membre", targetName));
+        int slot = 20;
         for (String role : village.customRoles().keySet()) inventory.setItem(slot++, item(Material.NAME_TAG, role, "Role personnalise", targetName));
-        inventory.setItem(31, item(Material.ARROW, BACK, "Retour a la gestion des membres."));
+        inventory.setItem(40, item(Material.ARROW, BACK, "Retour a la gestion des membres."));
         player.openInventory(inventory);
     }
 
@@ -254,6 +263,7 @@ public final class VillageMenu implements Listener {
         }
         inventory.setItem(45, item(Material.ARROW, BACK, "Retour au menu principal."));
         inventory.setItem(49, item(Material.BARRIER, HOME, "Fermer ce menu et revenir a l'accueil."));
+        if (plugin.villages().villages().values().stream().noneMatch(Village::open)) inventory.setItem(22, item(Material.BARRIER, "Aucun village ouvert", "Aucun village n'accepte de nouveaux membres."));
         player.openInventory(inventory);
     }
 
@@ -285,7 +295,9 @@ public final class VillageMenu implements Listener {
                 player.closeInventory();
                 player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Saisissez le nom du village dans le chat, ou 'annuler'.");
             } else if (village == null && name.equals("Rejoindre un village")) openJoin(player);
-            else if (village != null && name.equals("Claim ce chunk")) claim(player, village);
+            else if (village != null && event.getSlot() == 4) {
+                openProfile(player, village);
+            } else if (village != null && name.equals("Claim ce chunk")) claim(player, village);
             else if (village != null && name.equals("Unclaim ce chunk")) unclaim(player, village);
             else if (village != null && name.equals("Claims du village")) openClaims(player, village);
             else if (village != null && name.equals("Aller au home")) {
@@ -301,7 +313,7 @@ public final class VillageMenu implements Listener {
                 player.closeInventory();
             } else if (village != null && name.equals("Profil du joueur")) openProfile(player, village);
             else if (village != null && name.equals("Membres et grades")) {
-                if (canManage(player, village)) openMembers(player, village); else deny(player);
+                openMembers(player, village);
             } else if (village != null && (name.equals("Ouvrir les adhesions") || name.equals("Fermer les adhesions"))) toggleOpen(player, village);
             else if (village != null && name.equals(CREATE_ROLE)) beginRoleCreation(player, village);
             else if (village != null && name.equals("Quitter le village") && !village.mayor().equals(player.getUniqueId())) openLeaveConfirmation(player);
@@ -340,19 +352,22 @@ public final class VillageMenu implements Listener {
             } else if (selected != null) {
                 player.sendMessage(ChatColor.RED + "Impossible de rejoindre ce village.");
             }
-        } else if (title.equals(MEMBERS) && village != null && canManage(player, village) && (name.equals(BACK) || name.equals(HOME))) {
+        } else if (title.equals(MEMBERS) && village != null && (name.equals(BACK) || name.equals(HOME))) {
             openMain(player);
-        } else if (title.equals(MEMBERS) && village != null && canManage(player, village) && name.equals("Inviter un joueur")) {
+        } else if (title.equals(MEMBERS) && village != null && name.equals("Inviter un joueur")) {
+            if (!canManage(player, village)) { deny(player); return; }
             openInvites(player, village);
-        } else if (title.equals(MEMBERS) && village != null && canManage(player, village) && clicked.getType() == Material.PLAYER_HEAD) {
+        } else if (title.equals(MEMBERS) && village != null && clicked.getType() == Material.PLAYER_HEAD) {
+            if (!canManage(player, village)) { deny(player); return; }
             SkullMeta meta = (SkullMeta) clicked.getItemMeta();
             OfflinePlayer target = meta.getOwningPlayer();
             if (target != null && event.getClick() == ClickType.RIGHT) toggleExcluded(player, village, target.getUniqueId(), target.getName());
             else if (target != null && village.role(target.getUniqueId()) == null) invite(player, village, target);
             else if (target != null) openRoleChooser(player, village, target.getUniqueId(), target.getName());
-        } else if (title.equals(INVITES) && village != null && canManage(player, village) && (name.equals(BACK) || name.equals(HOME))) {
+        } else if (title.equals(INVITES) && village != null && (name.equals(BACK) || name.equals(HOME))) {
             if (name.equals(BACK)) openMembers(player, village); else openMain(player);
-        } else if (title.equals(INVITES) && village != null && canManage(player, village) && clicked.getType() == Material.PLAYER_HEAD) {
+        } else if (title.equals(INVITES) && village != null && clicked.getType() == Material.PLAYER_HEAD) {
+            if (!canManage(player, village)) { deny(player); return; }
             SkullMeta meta = (SkullMeta) clicked.getItemMeta();
             OfflinePlayer target = meta.getOwningPlayer();
             if (target != null) invite(player, village, target);
@@ -436,6 +451,11 @@ public final class VillageMenu implements Listener {
     private void unclaim(Player player, Village village) {
         if (!canClaim(player, village)) { deny(player); return; }
         Claim claim = Claim.at(player.getChunk());
+        if (village.homeIsInClaim(claim)) {
+            player.sendMessage(ChatColor.RED + "Impossible de libérer ce chunk : il contient le home du village.");
+            openMain(player);
+            return;
+        }
         boolean removed = plugin.villages().unclaim(village, claim);
         player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + (removed ? "Chunk libere." : "Ce chunk ne vous appartient pas."));
         plugin.villages().save();
@@ -633,7 +653,7 @@ public final class VillageMenu implements Listener {
             lore.add(ChatColor.GRAY + "Temps de jeu : " + formatDuration(plugin.activity().playtime(player.getUniqueId())));
             lore.add(ChatColor.GRAY + "Acces au village : " + (village.open() ? "ouvert" : "ferme"));
             lore.add(ChatColor.GRAY + "Gestion : " + (canManage(player, village) ? "active" : "restreinte"));
-            lore.add(ChatColor.DARK_GRAY + "Cliquez pour voir votre profil complet.");
+            lore.add(ChatColor.DARK_GRAY + "Cliquez ici pour voir votre profil complet.");
             meta.setLore(lore);
         }
         stack.setItemMeta(meta);
