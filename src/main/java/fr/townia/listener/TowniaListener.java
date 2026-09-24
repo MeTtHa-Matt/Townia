@@ -42,7 +42,18 @@ public final class TowniaListener implements Listener {
     private final TowniaPlugin plugin;
     private final Map<UUID, String> lastZones = new HashMap<>();
     public TowniaListener(TowniaPlugin plugin) { this.plugin = plugin; }
-    @EventHandler public void join(PlayerJoinEvent event) { plugin.activity().join(event.getPlayer()); plugin.skins().restore(event.getPlayer()); showZone(event.getPlayer(), event.getPlayer().getLocation(), true); }
+    @EventHandler public void join(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        plugin.activity().join(player);
+        plugin.skins().restore(player);
+        if (!player.hasPlayedBefore()) {
+            plugin.sendFirstJoinGuide(player);
+            if (player.hasPermission("townia.admin") || player.isOp()) {
+                plugin.sendAdminGuide(player);
+            }
+        }
+        showZone(player, player.getLocation(), true);
+    }
     @EventHandler public void quit(PlayerQuitEvent event) { plugin.activity().quit(event.getPlayer()); lastZones.remove(event.getPlayer().getUniqueId()); }
     @EventHandler public void changedWorld(PlayerChangedWorldEvent event) {
         World previousWorld = event.getFrom();

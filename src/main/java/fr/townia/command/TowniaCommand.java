@@ -31,6 +31,7 @@ public final class TowniaCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("world")) return world(sender, args);
         if (command.getName().equalsIgnoreCase("event")) return event(sender, args);
         if (command.getName().equalsIgnoreCase("leave")) return leave(sender, args);
+        if (command.getName().equalsIgnoreCase("aide")) return aide(sender, args);
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
@@ -40,25 +41,37 @@ public final class TowniaCommand implements CommandExecutor {
     }
 
     private void help(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "===== Townia =====");
-        sender.sendMessage(ChatColor.YELLOW + "/village" + ChatColor.WHITE + " - Ouvrir l'interface graphique");
-        sender.sendMessage(ChatColor.YELLOW + "/village create <nom>" + ChatColor.WHITE + " - Creer un village");
-        sender.sendMessage(ChatColor.YELLOW + "/village invite <joueur>" + ChatColor.WHITE + " - Inviter un joueur");
-        sender.sendMessage(ChatColor.YELLOW + "/village join <nom>" + ChatColor.WHITE + " - Rejoindre un village ouvert ou invite");
-        sender.sendMessage(ChatColor.YELLOW + "/village open|close" + ChatColor.WHITE + " - Ouvrir ou fermer les adhesions");
-        sender.sendMessage(ChatColor.YELLOW + "/village claim|unclaim" + ChatColor.WHITE + " - Gerer le chunk actuel");
-        sender.sendMessage(ChatColor.YELLOW + "/claim" + ChatColor.WHITE + " - Claim le chunk actuel");
-        sender.sendMessage(ChatColor.YELLOW + "/unclaim" + ChatColor.WHITE + " - Retirer le claim actuel");
-        sender.sendMessage(ChatColor.YELLOW + "/village trust <joueur>" + ChatColor.WHITE + " - Ajouter un membre");
-        sender.sendMessage(ChatColor.YELLOW + "/village setrole <joueur> <member|vice>" + ChatColor.WHITE + " - Gerer un grade");
-        sender.sendMessage(ChatColor.YELLOW + "/townia stats" + ChatColor.WHITE + " - Voir son temps de jeu");
-        if (sender.hasPermission("townia.admin")) {
-            sender.sendMessage(ChatColor.RED + "--- Administration ---");
-            sender.sendMessage(ChatColor.RED + "/world" + ChatColor.WHITE + " - Ouvrir la gestion des mondes");
-            sender.sendMessage(ChatColor.RED + "/event" + ChatColor.WHITE + " - Se teleporter vers le monde d'event");
-            sender.sendMessage(ChatColor.RED + "/townia reload" + ChatColor.WHITE + " - Recharger la configuration");
-            sender.sendMessage(ChatColor.RED + "/townia help" + ChatColor.WHITE + " - Afficher cette aide");
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.GOLD + "===== Townia =====");
+            sender.sendMessage(ChatColor.YELLOW + "/village" + ChatColor.WHITE + " - ouvrir le menu du village");
+            sender.sendMessage(ChatColor.YELLOW + "/claim" + ChatColor.WHITE + " - revendiquer le chunk actuel");
+            sender.sendMessage(ChatColor.YELLOW + "/home" + ChatColor.WHITE + " - te téléporter au home du village");
+            sender.sendMessage(ChatColor.YELLOW + "/event" + ChatColor.WHITE + " - aller vers le monde d'événement");
+            sender.sendMessage(ChatColor.YELLOW + "/aide" + ChatColor.WHITE + " - afficher le guide complet");
+            return;
         }
+        plugin.sendFirstJoinGuide(player);
+        if (player.hasPermission("townia.admin") || player.isOp()) {
+            plugin.sendAdminGuide(player);
+        }
+    }
+
+    private boolean aide(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Cette commande est réservée aux joueurs en jeu.");
+            return true;
+        }
+        boolean admin = args != null && args.length > 0 && args[0].equalsIgnoreCase("admin");
+        if (admin && !(player.hasPermission("townia.admin") || player.isOp())) {
+            say(player, "Cette aide admin est réservée aux administrateurs.");
+            return true;
+        }
+        if (admin) {
+            plugin.sendAdminGuide(player);
+            return true;
+        }
+        plugin.sendFirstJoinGuide(player);
+        return true;
     }
 
     private boolean setHome(CommandSender sender, String[] args) {

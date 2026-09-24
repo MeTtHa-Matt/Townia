@@ -44,6 +44,9 @@ commands:
     description: Townia administration.
     usage: /townia <help|reload|stats>
     permission: townia.admin
+  aide:
+    description: Affiche le guide d'utilisation de Townia.
+    usage: /aide [admin]
 permissions:
   townia.admin:
     default: op

@@ -106,6 +106,7 @@ public final class TowniaPlugin extends JavaPlugin {
         getCommand("event").setExecutor(command);
         getCommand("leave").setExecutor(command);
         getCommand("townia").setExecutor(command);
+        getCommand("aide").setExecutor(command);
         villageMenu = new VillageMenu(this);
         worldMenu = new WorldMenu(this);
         getServer().getPluginManager().registerEvents(villageMenu, this);
@@ -113,6 +114,42 @@ public final class TowniaPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new TowniaListener(this), this);
         Bukkit.getScheduler().runTaskTimer(this, () -> getServer().getOnlinePlayers().forEach(activity::flush), 20L * 60, 20L * 60);
         printStartupBanner();
+    }
+
+    public void sendWelcomeMessage(Player player) {
+        if (player == null || !player.hasPlayedBefore()) {
+            return;
+        }
+    }
+
+    public void sendFirstJoinGuide(Player player) {
+        if (player == null) return;
+        player.sendMessage(ChatColor.GOLD + "══════════════════════════════════════");
+        player.sendMessage(ChatColor.GOLD + "Bienvenue sur Townia !");
+        player.sendMessage(ChatColor.WHITE + "Voici les bases pour bien commencer :");
+        player.sendMessage(ChatColor.YELLOW + "• /village" + ChatColor.WHITE + " : ouvre le menu du village");
+        player.sendMessage(ChatColor.YELLOW + "• /claim" + ChatColor.WHITE + " : revendique le chunk où tu te trouves");
+        player.sendMessage(ChatColor.YELLOW + "• /unclaim" + ChatColor.WHITE + " : retire ton claim actuel");
+        player.sendMessage(ChatColor.YELLOW + "• /sethome" + ChatColor.WHITE + " : place ton home dans un claim de ton village");
+        player.sendMessage(ChatColor.YELLOW + "• /home" + ChatColor.WHITE + " : retourne au home du village");
+        player.sendMessage(ChatColor.YELLOW + "• /event" + ChatColor.WHITE + " : va vers le monde d'événement");
+        player.sendMessage(ChatColor.YELLOW + "• /leave" + ChatColor.WHITE + " : retourne dans le monde principal si le monde le permet");
+        player.sendMessage(ChatColor.YELLOW + "• /aide" + ChatColor.WHITE + " : relance ce guide à tout moment");
+        player.sendMessage(ChatColor.GRAY + "Astuce : les moments de village, les claims et les permissions sont gérés depuis le menu village.");
+        player.sendMessage(ChatColor.GOLD + "══════════════════════════════════════");
+    }
+
+    public void sendAdminGuide(Player player) {
+        if (player == null) return;
+        player.sendMessage(ChatColor.DARK_RED + "══════════════════════════════════════");
+        player.sendMessage(ChatColor.DARK_RED + "Mode administrateur Townia activé");
+        player.sendMessage(ChatColor.WHITE + "Tu peux gérer le serveur avec :");
+        player.sendMessage(ChatColor.RED + "• /world" + ChatColor.WHITE + " : créer, modifier et supprimer les mondes");
+        player.sendMessage(ChatColor.RED + "• /event" + ChatColor.WHITE + " : teleportation vers le monde d'événement");
+        player.sendMessage(ChatColor.RED + "• /aide admin" + ChatColor.WHITE + " : relance l'aide administrateur");
+        player.sendMessage(ChatColor.RED + "• /townia reload" + ChatColor.WHITE + " : recharge la configuration");
+        player.sendMessage(ChatColor.GRAY + "Dans /world, tu peux gérer le mode de jeu, le PvP/PvE, les permissions, les inventaires sync et les paramètres de dimension.");
+        player.sendMessage(ChatColor.DARK_RED + "══════════════════════════════════════");
     }
 
     private void printStartupBanner() {
