@@ -1,48 +1,74 @@
 # Townia
 
-Townia est un plugin Paper qui organise un serveur autour des villages, des claims, des permissions de mondes, de la gestion d'événements et de la supervision admin.
+Townia est un plugin Paper pour serveur survival qui combine gestion de villages, claims, mondes personnalisés, onboarding, permissions par monde et outils d’administration. Il a été conçu pour offrir une expérience claire pour les joueurs, tout en gardant une logique de modération et de sécurité côté staff.
 
-## Ce que propose le plugin
+## Fonctionnalités principales
 
-- gestion de villages avec création, invitations, adhésions, grades et permissions
-- claims par chunk avec protection sur les actions de construction, interaction, PvP, PvE et ramassage
-- homes de village avec téléportation, suppression et autorisation dans les claims du village
-- gestion des mondes personnalisés via `/world`
-- configuration des permissions par monde : PvP, PvE, casse, pose, interaction, mode de jeu, inventaire synchronisé, etc.
-- support de dimensions et de retour `/leave`
-- gestion d'un monde d'événement via `/event`
-- suivi d'activité et temps de jeu
-- persistance YAML locale dans le dossier du plugin
+- création et gestion de villages
+- invitations, rôles, grades et permissions villageoises
+- claims par chunk avec protection des interactions, constructions, dégâts et récoltes
+- homes de village, téléportation, validation dans un claim du village
+- interface de gestion d’actions et de droits pour les villages
+- système de mondes personnalisés avec `/world`
+- paramètres par monde : PvP, PvE, mode de jeu, permissions, inventaire synchronisé, activation du village, activation du leave, etc.
+- gestion des dimensions du serveur avec protection du monde principal et création/suppression de mondes personnalisés
+- retour vers le monde principal via `/leave`
+- monde d’événement avec `/event`
+- commandes d’aide, règles du serveur et guide de première connexion
+- livre de règles personnalisable pour les nouveaux joueurs
+- commerce entre joueurs avec interface dédiée et demande/acceptation/refus
+- sauvegarde de l’inventaire selon le mode de synchronisation du monde
+- logique de sécurité pour éviter les suppressions dangereuses et les actions non autorisées
 
-## Commandes principales
+## Commandes disponibles
 
-- `/village` : ouvre le menu du village
+### Joueurs
+
+- `/village` : ouvre le menu principal du village
 - `/claim` : revendique le chunk actuel
 - `/unclaim` : retire le chunk actuel
-- `/sethome` : place le home du village dans un claim du village
-- `/home` : téléporte vers le home du village
+- `/sethome` : place le home du village dans un claim valide
+- `/home` : téléporte au home du village
 - `/delhome` : supprime le home du village
-- `/world` : gestion des mondes, permissions et paramètres
-- `/event` : téléporte vers le monde d'événement
-- `/leave` : retourne au monde principal si le monde le permet
-- `/aide` : affiche le guide du joueur
-- `/aide admin` : affiche l'aide spécifique aux admins
+- `/event` : téléporte vers le monde d’événement
+- `/leave` : retourne au monde principal si le système est autorisé dans ce monde
+- `/aide` : affiche le guide d’utilisation pour les joueurs
+- `/regles` : réouvre le livre de règles du serveur
+- `/commerce <joueur>` : propose un commerce
+- `/commerce accept` : accepte une demande de commerce
+- `/commerce refuse` : refuse une demande de commerce
 
-## Exemple de workflow pour un joueur
+### Admins
 
-1. Créer son village via le menu `/village`.
-2. Revendiquer des chunks avec `/claim` ou depuis le menu.
-3. Définir un home dans un claim de son village.
-4. Gérer les permissions et les membres depuis le menu village.
-5. Utiliser `/home` pour revenir au village.
+- `/world` : ouvre la gestion des mondes
+- `/aide admin` : affiche l’aide admin
 
-## Exemple de workflow pour un admin
+## Workflow type
 
-1. Ouvrir `/world` pour créer ou supprimer des mondes.
-2. Configurer les permissions de monde selon les besoins du serveur.
-3. Régler le mode de jeu, l'inventaire synchronisé et les paramètres du monde.
-4. Utiliser `/event` pour contrôler le monde d'événement.
-5. Vérifier les réglages avec `/aide admin`.
+### Pour un joueur
+
+1. ouvrir `/village` et créer son village
+2. revendiquer des chunks
+3. configurer les permissions et les membres du village
+4. définir un home dans un claim du village
+5. utiliser `/home` pour revenir rapidement
+6. consulter `/regles` et `/aide` en cas de besoin
+
+### Pour un admin
+
+1. ouvrir `/world`
+2. créer, renommer ou supprimer des mondes selon les besoins
+3. régler les permissions de monde, le PvP/PvE et les paramètres de jeu
+4. gérer le mode d’inventaire des mondes
+5. contrôler les mondes de jeu, d’événement ou de transition
+
+## Structure technique
+
+- Java 21
+- Paper API 1.21.x
+- Gradle
+- Multiverse Core comme dépendance de gestion des mondes
+- données persistées côté plugin, en local dans le dossier `plugins/Townia/`
 
 ## Construction
 
@@ -50,10 +76,16 @@ Townia est un plugin Paper qui organise un serveur autour des villages, des clai
 ./gradlew clean test
 ```
 
-Le fichier JAR est généré dans `build/libs/` puis à copier dans le dossier `plugins/` d'un serveur Paper.
+Le JAR généré peut ensuite être déposé dans le dossier `plugins/` d’un serveur Paper.
 
-## Notes de compatibilité
+## Points de sécurité et d’usage
 
-- le projet vise Java 21 et l'API Paper 1.21.x
-- Multiverse-Core est utilisé comme dépendance pour la gestion des mondes
-- le plugin sauvegarde ses données dans `plugins/Townia/`
+- le monde principal est protégé contre les suppressions
+- les suppressions de monde refusent les actions lorsque des joueurs sont présents
+- les homes ne peuvent pas être définis hors d’un claim valide
+- les suppressions de claim sur un home sont bloquées
+- la validation des permissions par monde et par village est appliquée avant les actions de jeu
+
+## Remarques
+
+Ce plugin est pensé pour un usage de serveur survie avec un cadre visuel lisible, des menus accessibles et un système de monde modulaire. Le README est volontairement orienté « serveur réel » et reflète les outils réellement disponibles dans le projet.
