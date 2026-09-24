@@ -26,6 +26,7 @@ public final class TowniaCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("claim")) return village(sender, new String[]{"claim"});
         if (command.getName().equalsIgnoreCase("unclaim")) return village(sender, new String[]{"unclaim"});
         if (command.getName().equalsIgnoreCase("world")) return world(sender, args);
+        if (command.getName().equalsIgnoreCase("event")) return event(sender, args);
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
@@ -49,9 +50,8 @@ public final class TowniaCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.YELLOW + "/townia stats" + ChatColor.WHITE + " - Voir son temps de jeu");
         if (sender.hasPermission("townia.admin")) {
             sender.sendMessage(ChatColor.RED + "--- Administration ---");
-            sender.sendMessage(ChatColor.RED + "/world create <nom>" + ChatColor.WHITE + " - Creer un monde");
-            sender.sendMessage(ChatColor.RED + "/world join <nom>" + ChatColor.WHITE + " - Rejoindre un monde");
-            sender.sendMessage(ChatColor.RED + "/world delete <nom>" + ChatColor.WHITE + " - Decharger un monde");
+            sender.sendMessage(ChatColor.RED + "/world" + ChatColor.WHITE + " - Ouvrir la gestion des mondes");
+            sender.sendMessage(ChatColor.RED + "/event" + ChatColor.WHITE + " - Se teleporter vers le monde d'event");
             sender.sendMessage(ChatColor.RED + "/townia reload" + ChatColor.WHITE + " - Recharger la configuration");
             sender.sendMessage(ChatColor.RED + "/townia help" + ChatColor.WHITE + " - Afficher cette aide");
         }
@@ -78,15 +78,50 @@ public final class TowniaCommand implements CommandExecutor {
     }
 
     private boolean world(CommandSender sender, String[] args) {
-        if (args.length < 2) return usage(sender, "world <create|delete|join> <name>");
-        String name = args[1].replaceAll("[^A-Za-z0-9_-]", "");
-        if (name.isBlank()) return usage(sender, "valid world name required");
-        switch (args[0].toLowerCase()) {
-            case "create" -> { Bukkit.createWorld(new WorldCreator(name)); say(sender, "World created: " + name); }
-            case "join" -> { if (!(sender instanceof Player player)) return true; World world = Bukkit.getWorld(name); if (world == null) world = Bukkit.createWorld(new WorldCreator(name)); player.teleport(Objects.requireNonNull(world).getSpawnLocation()); }
-            case "delete" -> { World world = Bukkit.getWorld(name); if (world == null || world.equals(Bukkit.getWorlds().getFirst())) return usage(sender, "world cannot be deleted or is not loaded"); Bukkit.unloadWorld(world, false); say(sender, "World unloaded. Delete its folder manually after confirmation: " + new File(Bukkit.getWorldContainer(), name)); }
-            default -> say(sender, "Unknown world action.");
+        if (!(sender instanceof Player player)) return true;
+        if (!player.hasPermission("townia.admin.world")) return denied(player);
+        if (args.length == 0) {
+            plugin.worldMenu().openMain(player);
+            return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("create")) {
+            player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Saisissez le nom du monde dans le chat, ou 'annuler'.");
+            return true;
+        }
+        String name = args[1].replaceAll("[^A-Za-z0-9_-]", "");
+        if (args.length >= 2 && args[0].equalsIgnoreCase("create")) {
+            if (plugin.createWorld(name)) say(sender, "Monde cree : " + name);
+            else say(sender, "Impossible de creer ce monde.");
+            return true;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("join")) {
+            World world = Bukkit.getWorld(name);
+            if (world == null) world = Bukkit.createWorld(new WorldCreator(name));
+            if (world == null) { say(sender, "Monde introuvable."); return true; }
+            player.teleport(world.getSpawnLocation());
+            say(sender, "Teleportation vers " + world.getName() + ".");
+            return true;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("delete")) {
+            World world = Bukkit.getWorld(name);
+            if (world == null || world.equals(Bukkit.getWorlds().getFirst())) return usage(sender, "monde invalide");
+            if (plugin.deleteWorld(world)) say(sender, "Monde supprime : " + name);
+            else say(sender, "Impossible de supprimer ce monde.");
+            return true;
+        }
+        plugin.worldMenu().openMain(player);
+        return true;
+    }
+
+    private boolean event(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) return true;
+        World eventWorld = plugin.getEventWorld();
+        if (eventWorld == null) {
+            player.sendMessage(ChatColor.RED + "Aucun event pour le moment.");
+            return true;
+        }
+        player.teleport(eventWorld.getSpawnLocation());
+        player.sendMessage(ChatColor.GREEN + "Teleportation vers le /event : " + eventWorld.getName() + ".");
         return true;
     }
     private boolean canManage(Village v, Player p) { return p.hasPermission("townia.village.manage") && (v.role(p.getUniqueId()) == VillageRole.MAYOR || v.role(p.getUniqueId()) == VillageRole.VICE_MAYOR); }

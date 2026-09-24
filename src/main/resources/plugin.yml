@@ -18,8 +18,12 @@ commands:
     usage: /unclaim
   world:
     description: Manage Townia worlds.
-    usage: /world <create|delete|join> <name>
+    usage: /world
     permission: townia.admin.world
+  event:
+    description: Teleport to the active event world.
+    usage: /event
+    permission: townia.event
   townia:
     aliases: [towniaadmin]
     description: Townia administration.
@@ -30,6 +34,8 @@ permissions:
     default: op
   townia.admin.world:
     default: op
+  townia.event:
+    default: true
   townia.bypass:
     default: op
   townia.village.create:
