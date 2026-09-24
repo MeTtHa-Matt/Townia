@@ -44,7 +44,15 @@ public final class TowniaListener implements Listener {
     public TowniaListener(TowniaPlugin plugin) { this.plugin = plugin; }
     @EventHandler public void join(PlayerJoinEvent event) { plugin.activity().join(event.getPlayer()); plugin.skins().restore(event.getPlayer()); showZone(event.getPlayer(), event.getPlayer().getLocation(), true); }
     @EventHandler public void quit(PlayerQuitEvent event) { plugin.activity().quit(event.getPlayer()); lastZones.remove(event.getPlayer().getUniqueId()); }
-    @EventHandler public void changedWorld(PlayerChangedWorldEvent event) { showZone(event.getPlayer(), event.getPlayer().getLocation(), true); }
+    @EventHandler public void changedWorld(PlayerChangedWorldEvent event) {
+        World previousWorld = event.getFrom();
+        World nextWorld = event.getPlayer().getWorld();
+        plugin.applyWorldInventoryPolicy(event.getPlayer(), previousWorld, nextWorld);
+        if (nextWorld != null) {
+            event.getPlayer().setGameMode(plugin.getWorldGameMode(nextWorld.getName()));
+        }
+        showZone(event.getPlayer(), event.getPlayer().getLocation(), true);
+    }
     @EventHandler public void move(PlayerMoveEvent event) { if (event.getFrom().getBlockX() != event.getTo().getBlockX() || event.getFrom().getBlockZ() != event.getTo().getBlockZ()) { plugin.activity().touch(event.getPlayer()); if (event.getFrom().getChunk().getX() != event.getTo().getChunk().getX() || event.getFrom().getChunk().getZ() != event.getTo().getChunk().getZ()) showZone(event.getPlayer(), event.getTo(), false); } }
     @EventHandler public void breakBlock(BlockBreakEvent event) {
         if (!allowed(event.getPlayer(), event.getBlock().getChunk(), VillageAction.BUILD)) event.setCancelled(true);
@@ -54,7 +62,19 @@ public final class TowniaListener implements Listener {
     }
     @EventHandler public void burn(BlockBurnEvent event) { if (plugin.villages().owner(new Claim(event.getBlock().getWorld().getName(), event.getBlock().getChunk().getX(), event.getBlock().getChunk().getZ())) != null) event.setCancelled(true); }
     @EventHandler public void ignite(BlockIgniteEvent event) { if (event.getPlayer() != null && !allowed(event.getPlayer(), event.getBlock().getChunk(), VillageAction.FIRE)) event.setCancelled(true); }
-    @EventHandler public void damage(EntityDamageEvent event) { if (!(event instanceof EntityDamageByEntityEvent combat) || !(combat.getDamager() instanceof Player player)) return; VillageAction action = combat.getEntity() instanceof Player ? VillageAction.PVP : VillageAction.PVE; if (!allowed(player, combat.getEntity().getLocation().getChunk(), action)) event.setCancelled(true); }
+    @EventHandler public void damage(EntityDamageEvent event) {
+        if (!(event instanceof EntityDamageByEntityEvent combat)) return;
+        if (combat.getDamager() instanceof Player player) {
+            plugin.registerCombat(player);
+        }
+        if (combat.getEntity() instanceof Player target) {
+            plugin.registerCombat(target);
+        }
+        if (combat.getDamager() instanceof Player player) {
+            VillageAction action = combat.getEntity() instanceof Player ? VillageAction.PVP : VillageAction.PVE;
+            if (!allowed(player, combat.getEntity().getLocation().getChunk(), action)) event.setCancelled(true);
+        }
+    }
     @EventHandler public void pickup(EntityPickupItemEvent event) { if (event.getEntity() instanceof Player player && !allowed(player, event.getItem().getChunk(), VillageAction.PICKUP)) event.setCancelled(true); }
     @EventHandler public void drop(BlockDropItemEvent event) {
         // Les blocs cassés doivent toujours laisser tomber leurs items, même sans permission "Jeter".
@@ -79,7 +99,13 @@ public final class TowniaListener implements Listener {
 
     private boolean allowed(Player player, org.bukkit.Chunk chunk, VillageAction action) {
         if (player.hasPermission("townia.bypass")) return true;
-        Village village = plugin.villages().owner(new Claim(chunk.getWorld().getName(), chunk.getX(), chunk.getZ()));
+        World world = chunk.getWorld();
+        if (!plugin.isWorldActionAllowed(world.getName(), player, action.name())) {
+            player.sendActionBar(ChatColor.RED + "Action interdite dans le monde " + world.getName() + ".");
+            return false;
+        }
+        if (!plugin.isWorldVillageEnabled(world.getName())) return true;
+        Village village = plugin.villages().owner(new Claim(world.getName(), chunk.getX(), chunk.getZ()));
         if (village == null) return true;
         if (village.excluded().contains(player.getUniqueId())) return false;
         boolean result = village.allows(player.getUniqueId(), action);

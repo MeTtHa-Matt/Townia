@@ -5,6 +5,7 @@ import fr.townia.model.Village;
 import fr.townia.model.VillageRole;
 import fr.townia.model.VillagePermissions;
 import fr.townia.model.VillageAction;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.Location;
@@ -108,6 +109,22 @@ public final class VillageManager {
             UUID mayor = UUID.fromString(yaml.getString(path + ".mayor"));
             Village village = new Village(id, yaml.getString(path + ".name", "Village"), mayor);
             village.setOpen(yaml.getBoolean(path + ".open", false));
+            String homeWorld = yaml.getString(path + ".home.world");
+            if (homeWorld != null && !homeWorld.isBlank()) {
+                village.setHome(new Location(Bukkit.getWorld(homeWorld),
+                        yaml.getDouble(path + ".home.x", 0.0),
+                        yaml.getDouble(path + ".home.y", 64.0),
+                        yaml.getDouble(path + ".home.z", 0.0),
+                        (float) yaml.getDouble(path + ".home.yaw", 0.0),
+                        (float) yaml.getDouble(path + ".home.pitch", 0.0)));
+            } else {
+                double x = yaml.getDouble(path + ".home.x", 0.0);
+                double y = yaml.getDouble(path + ".home.y", 64.0);
+                double z = yaml.getDouble(path + ".home.z", 0.0);
+                if (yaml.contains(path + ".home.x") || yaml.contains(path + ".home.y") || yaml.contains(path + ".home.z")) {
+                    village.setHome(new Location(null, x, y, z, (float) yaml.getDouble(path + ".home.yaw", 0.0), (float) yaml.getDouble(path + ".home.pitch", 0.0)));
+                }
+            }
             village.members().clear();
             for (String entry : yaml.getStringList(path + ".members")) {
                 String[] values = entry.split(":", 2);
@@ -143,6 +160,14 @@ public final class VillageManager {
             yaml.set(path + ".name", village.name());
             yaml.set(path + ".mayor", village.mayor().toString());
             yaml.set(path + ".open", village.open());
+            if (village.home() != null) {
+                yaml.set(path + ".home.world", village.home().getWorld() == null ? null : village.home().getWorld().getName());
+                yaml.set(path + ".home.x", village.home().getX());
+                yaml.set(path + ".home.y", village.home().getY());
+                yaml.set(path + ".home.z", village.home().getZ());
+                yaml.set(path + ".home.yaw", village.home().getYaw());
+                yaml.set(path + ".home.pitch", village.home().getPitch());
+            }
             yaml.set(path + ".members", village.members().entrySet().stream().map(e -> e.getKey() + ":" + e.getValue()).toList());
             yaml.set(path + ".invited", village.invited().stream().map(UUID::toString).toList());
             yaml.set(path + ".excluded", village.excluded().stream().map(UUID::toString).toList());
@@ -172,6 +197,7 @@ public final class VillageManager {
                 yaml.getBoolean(path + ".useDoor", defaults.useDoor()),
                 yaml.getBoolean(path + ".useButton", defaults.useButton()),
                 yaml.getBoolean(path + ".useLever", defaults.useLever()),
+                yaml.getBoolean(path + ".home", defaults.home()),
                 yaml.getBoolean(path + ".createRoles", defaults.createRoles())
         );
     }
@@ -190,6 +216,7 @@ public final class VillageManager {
         yaml.set(path + ".useDoor", permissions.useDoor());
         yaml.set(path + ".useButton", permissions.useButton());
         yaml.set(path + ".useLever", permissions.useLever());
+        yaml.set(path + ".home", permissions.home());
         yaml.set(path + ".createRoles", permissions.createRoles());
     }
 }

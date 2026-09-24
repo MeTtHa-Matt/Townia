@@ -25,8 +25,12 @@ public final class TowniaCommand implements CommandExecutor {
         if (command.getName().equalsIgnoreCase("village")) return village(sender, args);
         if (command.getName().equalsIgnoreCase("claim")) return village(sender, new String[]{"claim"});
         if (command.getName().equalsIgnoreCase("unclaim")) return village(sender, new String[]{"unclaim"});
+        if (command.getName().equalsIgnoreCase("sethome")) return setHome(sender, args);
+        if (command.getName().equalsIgnoreCase("home")) return home(sender, args);
+        if (command.getName().equalsIgnoreCase("delhome")) return delHome(sender, args);
         if (command.getName().equalsIgnoreCase("world")) return world(sender, args);
         if (command.getName().equalsIgnoreCase("event")) return event(sender, args);
+        if (command.getName().equalsIgnoreCase("leave")) return leave(sender, args);
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) { help(sender); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) { plugin.reloadConfig(); say(sender, "Configuration reloaded."); return true; }
         if (args.length > 0 && args[0].equalsIgnoreCase("stats") && sender instanceof Player player) {
@@ -57,8 +61,90 @@ public final class TowniaCommand implements CommandExecutor {
         }
     }
 
+    private boolean setHome(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) { say(sender, "Player only."); return true; }
+        if (!plugin.isWorldVillageEnabled(player.getWorld().getName())) {
+            say(player, "Le système de village est désactivé dans ce monde.");
+            return true;
+        }
+        Village village;
+        if (args != null && args.length > 0) {
+            if (!player.hasPermission("townia.admin")) return denied(player);
+            village = plugin.villages().byName(String.join(" ", args));
+            if (village == null) { say(player, "Aucun village trouve pour le nom donne."); return true; }
+        } else {
+            village = plugin.villages().byPlayer(player.getUniqueId());
+            if (village == null || !canManage(village, player)) {
+                say(player, "Vous devez etre maire ou vice-maire du village pour definir son home.");
+                return true;
+            }
+        }
+
+        Claim claim = Claim.at(player.getLocation().getChunk());
+        Village claimOwner = plugin.villages().owner(claim);
+        if (claimOwner == null || !claimOwner.id().equals(village.id())) {
+            say(player, "Le home ne peut être défini que dans un claim du village.");
+            return true;
+        }
+
+        village.setHome(player.getLocation().clone());
+        plugin.villages().save();
+        say(player, "Home du village \"" + village.name() + "\" enregistré.");
+        return true;
+    }
+
+    private boolean home(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) { say(sender, "Player only."); return true; }
+        if (!plugin.isWorldVillageEnabled(player.getWorld().getName())) {
+            say(player, "Le système de village est désactivé dans ce monde.");
+            return true;
+        }
+        Village village = plugin.villages().byPlayer(player.getUniqueId());
+        if (village == null) { say(player, "Vous n'etes dans aucun village."); return true; }
+        if (!player.hasPermission("townia.village.home") || !village.allows(player.getUniqueId(), fr.townia.model.VillageAction.HOME)) {
+            return denied(player);
+        }
+        if (village.home() == null) { say(player, "Aucun home n'a ete defini pour ce village."); return true; }
+        if (village.home().getWorld() == null || Bukkit.getWorld(village.home().getWorld().getName()) == null) {
+            say(player, "Le monde du home n'est pas disponible pour le moment.");
+            return true;
+        }
+        player.teleport(village.home());
+        say(player, "Teleportation vers le home du village \"" + village.name() + "\".");
+        return true;
+    }
+
+    private boolean delHome(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) { say(sender, "Player only."); return true; }
+        if (!plugin.isWorldVillageEnabled(player.getWorld().getName())) {
+            say(player, "Le système de village est désactivé dans ce monde.");
+            return true;
+        }
+        Village village;
+        if (args != null && args.length > 0) {
+            if (!player.hasPermission("townia.admin")) return denied(player);
+            village = plugin.villages().byName(String.join(" ", args));
+            if (village == null) { say(player, "Aucun village trouve pour le nom donne."); return true; }
+        } else {
+            village = plugin.villages().byPlayer(player.getUniqueId());
+            if (village == null || !canManage(village, player)) {
+                say(player, "Vous devez etre maire ou vice-maire du village pour supprimer son home.");
+                return true;
+            }
+        }
+        if (village.home() == null) { say(player, "Aucun home n'est enregistre pour ce village."); return true; }
+        village.setHome(null);
+        plugin.villages().save();
+        say(player, "Home du village \"" + village.name() + "\" supprime.");
+        return true;
+    }
+
     private boolean village(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) { say(sender, "Player only."); return true; }
+        if (!plugin.isWorldVillageEnabled(player.getWorld().getName())) {
+            say(player, "Le système de village est désactivé dans ce monde.");
+            return true;
+        }
         if (args.length == 0) { plugin.villageMenu().openMain(player); return true; }
         Village own = plugin.villages().byPlayer(player.getUniqueId());
         switch (args[0].toLowerCase()) {
@@ -84,33 +170,57 @@ public final class TowniaCommand implements CommandExecutor {
             plugin.worldMenu().openMain(player);
             return true;
         }
-        if (args.length == 1 && args[0].equalsIgnoreCase("create")) {
-            player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Saisissez le nom du monde dans le chat, ou 'annuler'.");
-            return true;
+
+        switch (args[0].toLowerCase()) {
+            case "list" -> {
+                if (plugin.managedWorlds().isEmpty()) {
+                    say(sender, "Aucun monde multiverse charge.");
+                    return true;
+                }
+                say(sender, "Mondes disponibles :");
+                for (World world : plugin.managedWorlds()) {
+                    say(sender, "- " + world.getName() + " (sync: " + (plugin.isWorldInventorySyncEnabled(world.getName()) ? "oui" : "non") + ")");
+                }
+                return true;
+            }
+            case "create" -> {
+                if (args.length < 2) {
+                    player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Saisissez le nom du monde dans le chat, ou 'annuler'.");
+                    return true;
+                }
+                String name = args[1].replaceAll("[^A-Za-z0-9_-]", "");
+                if (plugin.createWorld(name)) say(sender, "Monde cree : " + name);
+                else say(sender, "Impossible de creer ce monde.");
+                return true;
+            }
+            case "join", "tp" -> {
+                if (args.length < 2) return usage(sender, "join <nom>");
+                World world = Bukkit.getWorld(args[1]);
+                if (world == null) { say(sender, "Monde introuvable."); return true; }
+                player.teleport(world.getSpawnLocation());
+                say(sender, "Teleportation vers " + world.getName() + ".");
+                return true;
+            }
+            case "delete" -> {
+                if (args.length < 2) return usage(sender, "delete <nom>");
+                World world = Bukkit.getWorld(args[1]);
+                if (world == null) return usage(sender, "monde invalide");
+                if (!world.getPlayers().isEmpty()) {
+                    say(sender, "Impossible de supprimer le monde " + world.getName() + " : des joueurs sont encore dedans.");
+                    for (Player online : world.getPlayers()) {
+                        online.sendMessage(ChatColor.RED + "[Townia] Impossible de supprimer ce monde tant que vous y etes encore present.");
+                    }
+                    return true;
+                }
+                if (plugin.deleteWorld(world)) say(sender, "Monde supprime : " + world.getName());
+                else say(sender, "Impossible de supprimer ce monde.");
+                return true;
+            }
+            default -> {
+                plugin.worldMenu().openMain(player);
+                return true;
+            }
         }
-        String name = args[1].replaceAll("[^A-Za-z0-9_-]", "");
-        if (args.length >= 2 && args[0].equalsIgnoreCase("create")) {
-            if (plugin.createWorld(name)) say(sender, "Monde cree : " + name);
-            else say(sender, "Impossible de creer ce monde.");
-            return true;
-        }
-        if (args.length >= 2 && args[0].equalsIgnoreCase("join")) {
-            World world = Bukkit.getWorld(name);
-            if (world == null) world = Bukkit.createWorld(new WorldCreator(name));
-            if (world == null) { say(sender, "Monde introuvable."); return true; }
-            player.teleport(world.getSpawnLocation());
-            say(sender, "Teleportation vers " + world.getName() + ".");
-            return true;
-        }
-        if (args.length >= 2 && args[0].equalsIgnoreCase("delete")) {
-            World world = Bukkit.getWorld(name);
-            if (world == null || world.equals(Bukkit.getWorlds().getFirst())) return usage(sender, "monde invalide");
-            if (plugin.deleteWorld(world)) say(sender, "Monde supprime : " + name);
-            else say(sender, "Impossible de supprimer ce monde.");
-            return true;
-        }
-        plugin.worldMenu().openMain(player);
-        return true;
     }
 
     private boolean event(CommandSender sender, String[] args) {
@@ -120,8 +230,42 @@ public final class TowniaCommand implements CommandExecutor {
             player.sendMessage(ChatColor.RED + "Aucun event pour le moment.");
             return true;
         }
+        if (player.getWorld().equals(eventWorld)) {
+            player.sendMessage(ChatColor.YELLOW + "Vous êtes déjà dans le monde d'event : " + eventWorld.getName() + ".");
+            return true;
+        }
         player.teleport(eventWorld.getSpawnLocation());
         player.sendMessage(ChatColor.GREEN + "Teleportation vers le /event : " + eventWorld.getName() + ".");
+        return true;
+    }
+
+    private boolean leave(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) return true;
+        World current = player.getWorld();
+        if (current == null) return true;
+        if (plugin.isDefaultWorldName(current.getName()) || "world_nether".equalsIgnoreCase(current.getName()) || "world_the_end".equalsIgnoreCase(current.getName())) {
+            say(player, "La commande /leave n'est disponible que dans les mondes crees par /world.");
+            return true;
+        }
+        if (!plugin.isCustomManagedWorld(current.getName())) {
+            say(player, "Ce monde ne peut pas etre quitte avec /leave.");
+            return true;
+        }
+        if (!plugin.isWorldLeaveEnabled(current.getName())) {
+            say(player, "Le /leave est desactive dans ce monde.");
+            return true;
+        }
+        if (!plugin.canLeaveWorld(player)) {
+            say(player, "Vous ne pouvez pas utiliser /leave pendant 30 secondes apres un combat ou une attaque.");
+            return true;
+        }
+        World fallback = Bukkit.getWorld("world");
+        if (fallback == null) {
+            say(player, "Le monde principal est introuvable.");
+            return true;
+        }
+        player.teleport(fallback.getSpawnLocation());
+        say(player, "Retour vers le monde principal.");
         return true;
     }
     private boolean canManage(Village v, Player p) { return p.hasPermission("townia.village.manage") && (v.role(p.getUniqueId()) == VillageRole.MAYOR || v.role(p.getUniqueId()) == VillageRole.VICE_MAYOR); }

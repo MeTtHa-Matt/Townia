@@ -14,6 +14,7 @@ public enum VillageAction {
     USE_DOOR("Utiliser les portes"),
     USE_BUTTON("Utiliser les boutons"),
     USE_LEVER("Utiliser les leviers"),
+    HOME("Se teleporter au home"),
     CREATE_ROLES("Creer des roles");
 
     private final String label;

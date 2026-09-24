@@ -1,11 +1,13 @@
 package fr.townia.service;
 
+import fr.townia.TowniaPlugin;
 import fr.townia.gui.VillageMenu;
 import fr.townia.model.Claim;
 import fr.townia.model.VillageAction;
 import fr.townia.model.Village;
 import fr.townia.model.VillagePermissions;
 import fr.townia.model.VillageRole;
+import org.bukkit.Location;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -91,6 +93,65 @@ class VillageManagerTest {
         assertTrue(points.stream().anyMatch(point -> point[0] == 47 && point[2] == 48));
         assertTrue(points.stream().anyMatch(point -> point[0] == 32 && point[2] == 63));
         assertTrue(points.stream().anyMatch(point -> point[0] == 47 && point[2] == 63));
+    }
+
+    @Test void customWorldInventorySyncDefaultsToDisabled() {
+        assertFalse(TowniaPlugin.defaultWorldInventorySync());
+        assertTrue(TowniaPlugin.resolveWorldInventorySync(Boolean.TRUE));
+        assertFalse(TowniaPlugin.resolveWorldInventorySync(Boolean.FALSE));
+    }
+
+    @Test void inventorySyncFlagsDefineResetBehaviourPerWorld() {
+        assertFalse(TowniaPlugin.defaultWorldInventorySync());
+        assertTrue(TowniaPlugin.resolveWorldInventorySync(Boolean.TRUE));
+        assertFalse(TowniaPlugin.resolveWorldInventorySync(Boolean.FALSE));
+        assertTrue(TowniaPlugin.shouldKeepInventory(true));
+        assertFalse(TowniaPlugin.shouldKeepInventory(false));
+    }
+
+    @Test void defaultServerWorldsAreRecognizedAsSystemWorlds() {
+        assertTrue(TowniaPlugin.isProtectedWorldForDeletion("world"));
+        assertFalse(TowniaPlugin.isProtectedWorldForDeletion("world_nether"));
+        assertFalse(TowniaPlugin.isProtectedWorldForDeletion("world_the_end"));
+        assertFalse(TowniaPlugin.isProtectedWorldForDeletion("townia_survival"));
+    }
+
+    @Test void villageHomeIsStoredAndRestoredAsSingleLocation() {
+        VillageManager manager = new VillageManager(new File("build/test-home-data.yml"));
+        Village village = manager.create("HomeTown", UUID.randomUUID());
+        assertNotNull(village);
+
+        Location home = new Location(null, 42.5, 64.0, 18.5, 90.0f, 12.0f);
+        village.setHome(home);
+
+        manager.save();
+        manager.load();
+
+        Village reloaded = manager.byName("HomeTown");
+        assertNotNull(reloaded);
+        assertNotNull(reloaded.home());
+        assertEquals(42.5, reloaded.home().getX(), 0.001);
+        assertEquals(64.0, reloaded.home().getY(), 0.001);
+        assertEquals(18.5, reloaded.home().getZ(), 0.001);
+        assertEquals(90.0f, reloaded.home().getYaw(), 0.001f);
+    }
+
+    @Test void villageHomeRequiresAnExplicitVillagePermission() {
+        VillagePermissions mayorPermissions = VillagePermissions.defaults(VillageRole.MAYOR);
+        VillagePermissions memberPermissions = VillagePermissions.defaults(VillageRole.MEMBER);
+
+        assertTrue(mayorPermissions.allows(VillageAction.HOME));
+        assertTrue(memberPermissions.allows(VillageAction.HOME));
+    }
+
+    @Test void inventoryPolicySavesOnExitAndRestoresOnlyForSyncWorlds() {
+        assertTrue(TowniaPlugin.shouldSaveInventoryOnExit(false));
+        assertTrue(TowniaPlugin.shouldSaveInventoryOnExit(true));
+        assertTrue(TowniaPlugin.shouldRestoreInventoryOnEnter(true));
+        assertFalse(TowniaPlugin.shouldRestoreInventoryOnEnter(false));
+        assertTrue(TowniaPlugin.shouldInitializeSavedWorldInventory(true, false));
+        assertFalse(TowniaPlugin.shouldInitializeSavedWorldInventory(true, true));
+        assertFalse(TowniaPlugin.shouldInitializeSavedWorldInventory(false, false));
     }
 
 }

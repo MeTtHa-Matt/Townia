@@ -15,3 +15,5 @@ anti-cheat:
   xray-alert-threshold: 0.85
 worlds:
   folder-prefix: 'world'
+  sync-inventory: false
+  custom: {}

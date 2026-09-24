@@ -3,6 +3,7 @@ version: '${version}'
 main: fr.townia.TowniaPlugin
 api-version: '1.21'
 author: Townia
+depend: [Multiverse-Core]
 softdepend: [DiscordSRV, SkinsRestorer]
 description: Villages, claims, permissions and administration for Paper.
 commands:
@@ -16,6 +17,16 @@ commands:
   unclaim:
     description: Unclaim the current chunk from your village.
     usage: /unclaim
+  sethome:
+    description: Set the village home.
+    usage: /sethome [village]
+  home:
+    description: Teleport to the village home.
+    usage: /home
+    permission: townia.village.home
+  delhome:
+    description: Delete the village home.
+    usage: /delhome [village]
   world:
     description: Manage Townia worlds.
     usage: /world
@@ -24,6 +35,10 @@ commands:
     description: Teleport to the active event world.
     usage: /event
     permission: townia.event
+  leave:
+    description: Return to the main world from a custom /world dimension.
+    usage: /leave
+    permission: townia.world.leave
   townia:
     aliases: [towniaadmin]
     description: Townia administration.
@@ -36,9 +51,13 @@ permissions:
     default: op
   townia.event:
     default: true
+  townia.world.leave:
+    default: true
   townia.bypass:
     default: op
   townia.village.create:
+    default: true
+  townia.village.home:
     default: true
   townia.village.claim:
     default: true

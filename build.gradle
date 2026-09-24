@@ -8,11 +8,20 @@ version = '0.1.0'
 repositories {
     mavenCentral()
     maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://repo.onarandombox.com/content/groups/public/' }
 }
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+    runtimeOnly ('com.onarandombox.multiversecore:multiverse-core:4.3.14') {
+        exclude group: 'org.bukkit', module: 'bukkit'
+        exclude group: 'org.spigotmc', module: 'spigot-api'
+    }
     testImplementation 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+    testImplementation ('com.onarandombox.multiversecore:multiverse-core:4.3.14') {
+        exclude group: 'org.bukkit', module: 'bukkit'
+        exclude group: 'org.spigotmc', module: 'spigot-api'
+    }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
 }

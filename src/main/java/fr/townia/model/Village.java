@@ -10,11 +10,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.bukkit.Location;
+
 public final class Village {
     private final UUID id;
     private String name;
     private UUID mayor;
     private boolean open;
+    private Location home;
     private final Map<UUID, VillageRole> members = new LinkedHashMap<>();
     private final Set<UUID> invited = new java.util.HashSet<>();
     private final Set<UUID> excluded = new java.util.HashSet<>();
@@ -38,6 +41,8 @@ public final class Village {
     public UUID mayor() { return mayor; }
     public boolean open() { return open; }
     public void setOpen(boolean open) { this.open = open; }
+    public Location home() { return home == null ? null : home.clone(); }
+    public void setHome(Location home) { this.home = home == null ? null : home.clone(); }
     public Map<UUID, VillageRole> members() { return members; }
     public Set<UUID> invited() { return invited; }
     public Set<UUID> excluded() { return excluded; }

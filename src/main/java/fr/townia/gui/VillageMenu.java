@@ -70,6 +70,7 @@ public final class VillageMenu implements Listener {
             inventory.setItem(14, item(Material.PLAYER_HEAD, "Membres et grades", "Ajouter un joueur ou modifier son grade."));
             inventory.setItem(16, item(village.open() ? Material.LIME_DYE : Material.RED_DYE, village.open() ? "Fermer les adhesions" : "Ouvrir les adhesions", "Maire ou vice-maire uniquement."));
             inventory.setItem(19, item(Material.MAP, "Claims du village", village.claims().size() + " / " + maximumClaims(village) + " claims utilises"));
+            inventory.setItem(20, item(Material.ENDER_PEARL, "Aller au home", "Se teleporter vers le home du village."));
             if (canManage(player, village)) inventory.setItem(21, item(Material.COMPARATOR, "Permissions", "Regler les actions par grade."));
             if (village.allows(player.getUniqueId(), VillageAction.CREATE_ROLES)) inventory.setItem(23, item(Material.WRITABLE_BOOK, CREATE_ROLE, "Creer un role personnalise."));
             inventory.setItem(25, item(Material.BOOK, "Profil du joueur", "Temps de jeu, grade et activité."));
@@ -287,7 +288,18 @@ public final class VillageMenu implements Listener {
             else if (village != null && name.equals("Claim ce chunk")) claim(player, village);
             else if (village != null && name.equals("Unclaim ce chunk")) unclaim(player, village);
             else if (village != null && name.equals("Claims du village")) openClaims(player, village);
-            else if (village != null && name.equals("Profil du joueur")) openProfile(player, village);
+            else if (village != null && name.equals("Aller au home")) {
+                if (!player.hasPermission("townia.village.home") || !village.allows(player.getUniqueId(), VillageAction.HOME)) { deny(player); return; }
+                if (village.home() == null) { player.sendMessage(ChatColor.RED + "Aucun home n'a ete defini pour ce village."); return; }
+                Location home = village.home();
+                if (home.getWorld() == null || Bukkit.getWorld(home.getWorld().getName()) == null) {
+                    player.sendMessage(ChatColor.RED + "Le monde du home n'est pas disponible pour le moment.");
+                    return;
+                }
+                player.teleport(home);
+                player.sendMessage(ChatColor.GOLD + "[Townia] " + ChatColor.WHITE + "Teleportation vers le home du village \"" + village.name() + "\".");
+                player.closeInventory();
+            } else if (village != null && name.equals("Profil du joueur")) openProfile(player, village);
             else if (village != null && name.equals("Membres et grades")) {
                 if (canManage(player, village)) openMembers(player, village); else deny(player);
             } else if (village != null && (name.equals("Ouvrir les adhesions") || name.equals("Fermer les adhesions"))) toggleOpen(player, village);
